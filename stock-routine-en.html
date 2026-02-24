@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Routine Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eaf4fc;
+  --bg2: #daeaf7;
+  --panel: #ffffff;
+  --border: #bcd8f0;
+  --border2: #d0e8f8;
+  --accent: #1565c0;
+  --accent2: #0d47a1;
+  --accent3: #1e88e5;
+  --accent-light: rgba(21,101,192,0.08);
+  --text: #0a1e30;
+  --text2: #1a3a55;
+  --muted: #5580a0;
+  --green: #1b6e4a;
+  --green-bg: #d4f0e4;
+  --green-border: #9ed8be;
+  --red: #b71c1c;
+  --red-bg: #fce8e8;
+  --red-border: #f5b0b0;
+  --yellow: #b45a00;
+  --yellow-bg: #fff3d4;
+  --yellow-border: #f5d090;
+  --buy: #1565c0;
+  --buy-bg: #e3f0ff;
+  --sell: #b71c1c;
+  --sell-bg: #fce8e8;
+  --shadow: 0 2px 14px rgba(0,80,160,0.09);
+  --shadow2: 0 6px 28px rgba(0,80,160,0.14);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body {
+  background: linear-gradient(145deg, #cee3f6 0%, #eaf4fc 45%, #daeaf7 100%);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  font-size: 16px;
+}
+
+body::before {
+  content:'';position:fixed;top:-100px;right:-100px;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(30,136,229,0.12) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 22px 16px 50px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── HEADER ── */
+.header { text-align:center; margin-bottom:22px; animation:fadeDown .5s ease both; }
+
+.header-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--accent-light); border:1.5px solid var(--border);
+  color:var(--accent); font-size:12px; font-weight:700;
+  letter-spacing:2px; padding:4px 14px; border-radius:20px;
+  margin-bottom:10px; text-transform:uppercase;
+}
+
+.header h1 {
+  font-family:'DM Serif Display',serif;
+  font-size:40px; color:var(--accent2);
+  letter-spacing:-1px; line-height:1.05;
+}
+
+.header .sub { color:var(--muted); font-size:14px; margin-top:4px; font-weight:400; }
+
+/* ── TIME CARD ── */
+.time-card {
+  background:var(--panel); border:1.5px solid var(--border);
+  border-radius:18px; padding:16px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; box-shadow:var(--shadow);
+  animation:fadeDown .5s .08s ease both;
+}
+
+.time-left { display:flex; align-items:center; gap:11px; }
+
+.pulse-dot {
+  width:10px;height:10px;border-radius:50%;
+  background:var(--accent3);box-shadow:0 0 10px var(--accent3);
+  animation:pulse 2s infinite;flex-shrink:0;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.7);}}
+
+.clock { font-family:'DM Serif Display',serif; font-size:30px; color:var(--accent2); letter-spacing:1px; }
+.clock-date { font-size:12px; color:var(--muted); margin-top:1px; }
+
+.status-badge {
+  display:inline-block; padding:5px 12px;
+  border-radius:8px; font-size:13px; font-weight:700;
+}
+.s-open{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-border);}
+.s-closed{background:var(--red-bg);color:var(--red);border:1.5px solid var(--red-border);}
+.s-pre{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-border);}
+.next-ev{font-size:12px;color:var(--muted);margin-top:4px;text-align:right;}
+
+/* ── NAV TABS ── */
+.nav-tabs {
+  display:flex; background:var(--panel); border:1.5px solid var(--border);
+  border-radius:14px; padding:4px; margin-bottom:16px;
+  box-shadow:var(--shadow); animation:fadeDown .5s .16s ease both;
+  gap:3px;
+}
+
+.nav-tab {
+  flex:1; padding:11px 4px; text-align:center; border-radius:10px;
+  cursor:pointer; font-size:13px; font-weight:600;
+  transition:all .2s; color:var(--muted); line-height:1.3;
+}
+
+.nav-tab.active {
+  background:var(--accent); color:#fff;
+  box-shadow:0 2px 12px rgba(21,101,192,.28);
+}
+
+.tab-icon { display:block; font-size:18px; margin-bottom:2px; }
+
+/* ── SECTIONS ── */
+.section { display:none; animation:fadeUp .3s ease both; }
+.section.active { display:block; }
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── CARD BASE ── */
+.card {
+  background:var(--panel); border:1.5px solid var(--border);
+  border-radius:16px; padding:18px; margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+
+.card-title {
+  font-size:11px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:2px; margin-bottom:13px;
+}
+
+/* ── WATCHLIST ── */
+.wl-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:13px;
+}
+
+.wl-actions { display:flex; gap:7px; align-items:center; }
+
+.yahoo-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:13px; color:#fff; background:#6001d2;
+  border:none; padding:7px 13px; border-radius:9px;
+  cursor:pointer; font-weight:700; text-decoration:none;
+  transition:all .2s; font-family:'DM Sans',sans-serif;
+}
+.yahoo-btn:hover{background:#4a009e;transform:translateY(-1px);}
+
+.icon-btn {
+  width:34px; height:34px; border-radius:9px; background:var(--accent);
+  color:#fff; border:none; font-size:20px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s; box-shadow:0 2px 8px rgba(21,101,192,.25); line-height:1;
+}
+.icon-btn:hover{background:var(--accent2);transform:scale(1.07);}
+.icon-btn.danger{background:#c0392b;}
+.icon-btn.danger:hover{background:#96281b;}
+
+.chips-wrap { display:flex; flex-wrap:wrap; gap:7px; min-height:32px; }
+
+.chip {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 11px; border-radius:9px; font-size:13px;
+  font-weight:700; border:1.5px solid;
+  animation:chipIn .2s ease both;
+}
+@keyframes chipIn{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
+
+.chip-tech{background:#e6f0fd;color:#0044aa;border-color:#b8d0f5;}
+.chip-em{background:#e0f7f0;color:#006644;border-color:#9ed8be;}
+.chip-watch{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
+.chip-hold{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow-border);}
+.chip-other{background:var(--accent-light);color:var(--accent);border-color:var(--border);}
+
+.chip-x {
+  background:none; border:none; color:inherit; cursor:pointer;
+  font-size:15px; opacity:.4; padding:0; line-height:1; transition:opacity .15s;
+}
+.chip-x:hover{opacity:1;}
+
+.empty-note{font-size:14px;color:var(--muted);font-style:italic;}
+
+/* ── GUIDE ROWS ── */
+.guide-row {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:8px 0; border-bottom:1px solid var(--border2);
+  font-size:14px; color:var(--text2);
+}
+.guide-row:last-child{border-bottom:none;}
+.guide-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+
+/* ── PROGRESS ── */
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.prog-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.prog-count{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
+.prog-bar{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;border:1px solid var(--border2);}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:4px;transition:width .4s ease;}
+
+/* ── CHECKLIST ── */
+.checklist{display:flex;flex-direction:column;gap:10px;}
+
+.check-item {
+  background:var(--panel); border:1.5px solid var(--border);
+  border-radius:14px; padding:15px 17px;
+  cursor:pointer; transition:all .2s;
+  display:flex; align-items:flex-start; gap:13px;
+  box-shadow:var(--shadow); position:relative; overflow:hidden;
+}
+.check-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--border);transition:background .2s;}
+.check-item:hover{border-color:var(--accent3);transform:translateX(3px);box-shadow:var(--shadow2);}
+.check-item.checked{border-color:#b0d4f0;background:linear-gradient(135deg,#f0f7ff,#e5f0fc);}
+.check-item.checked::before{background:var(--accent);}
+
+.check-box {
+  width:26px;height:26px;border-radius:8px;border:2px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;margin-top:1px;background:var(--bg2);
+}
+.check-item.checked .check-box{background:var(--accent);border-color:var(--accent);}
+.check-mark{color:#fff;font-size:14px;font-weight:800;opacity:0;transform:scale(0);transition:all .2s;}
+.check-item.checked .check-mark{opacity:1;transform:scale(1);}
+
+.check-body{flex:1;}
+.check-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.check-item.checked .check-title{color:var(--accent2);}
+
+.tag{font-size:11px;padding:3px 8px;border-radius:5px;font-weight:700;}
+.tag-time{background:#fff0e0;color:#a05000;border:1px solid #f5d090;}
+.tag-hot{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.tag-info{background:var(--accent-light);color:var(--accent);border:1px solid var(--border);}
+
+.check-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+.check-link {
+  display:inline-flex; align-items:center; gap:5px;
+  margin-top:8px; font-size:12px; color:var(--accent);
+  text-decoration:none; border:1.5px solid var(--border);
+  padding:4px 10px; border-radius:7px;
+  background:var(--accent-light); transition:all .2s; font-weight:600;
+}
+.check-link:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── SECTION HEADER ── */
+.sec-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.sec-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;box-shadow:var(--shadow);}
+.sec-icon.am{background:linear-gradient(135deg,#fff8d4,#ffe090);}
+.sec-icon.pm{background:linear-gradient(135deg,#d4eaf8,#b8d8f0);}
+.sec-icon.trd{background:linear-gradient(135deg,#d4f0e4,#a8dcc0);}
+.sec-icon.cal{background:linear-gradient(135deg,#e8d4f8,#d0b0f0);}
+
+.sec-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--accent2);letter-spacing:-.3px;}
+.sec-desc{font-size:13px;color:var(--muted);margin-top:2px;}
+
+/* ── COMPLETE BANNER ── */
+.done-banner{display:none;background:linear-gradient(135deg,#d4f0e4,#daeaf7);border:1.5px solid var(--green-border);border-radius:16px;padding:20px;text-align:center;margin-top:14px;}
+.done-banner.show{display:block;animation:fadeUp .4s ease both;}
+.done-emoji{font-size:36px;margin-bottom:6px;}
+.done-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--green);}
+.done-desc{font-size:13px;color:var(--muted);margin-top:4px;}
+
+.reset-btn{width:100%;padding:12px;background:transparent;border:1.5px solid var(--border);border-radius:11px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;margin-top:14px;}
+.reset-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+
+/* ── TRADE LOG ── */
+.trade-toolbar{display:flex;gap:8px;margin-bottom:14px;}
+
+.trade-btn {
+  flex:1; padding:11px; border-radius:11px; border:none;
+  font-size:14px; font-weight:700; cursor:pointer;
+  transition:all .2s; font-family:'DM Sans',sans-serif;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.trade-btn.buy{background:var(--buy-bg);color:var(--buy);border:1.5px solid #b0d0f5;}
+.trade-btn.buy:hover{background:var(--buy);color:#fff;}
+.trade-btn.sell{background:var(--sell-bg);color:var(--sell);border:1.5px solid var(--red-border);}
+.trade-btn.sell:hover{background:var(--sell);color:#fff;}
+
+.trade-list{display:flex;flex-direction:column;gap:9px;max-height:380px;overflow-y:auto;}
+.trade-list::-webkit-scrollbar{width:4px;}
+.trade-list::-webkit-scrollbar-track{background:var(--bg2);border-radius:2px;}
+.trade-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.trade-entry {
+  display:flex; align-items:center; gap:12px;
+  background:var(--panel); border:1.5px solid var(--border);
+  border-radius:12px; padding:12px 14px; box-shadow:var(--shadow);
+  animation:chipIn .25s ease both; position:relative;
+}
+
+.trade-badge {
+  padding:4px 9px; border-radius:7px; font-size:12px;
+  font-weight:700; flex-shrink:0; letter-spacing:.5px;
+}
+.tb-buy{background:var(--buy-bg);color:var(--buy);border:1.5px solid #b0d0f5;}
+.tb-sell{background:var(--sell-bg);color:var(--sell);border:1.5px solid var(--red-border);}
+
+.trade-info{flex:1;}
+.trade-ticker{font-size:15px;font-weight:700;color:var(--text);}
+.trade-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+
+.trade-amount{font-size:14px;font-weight:700;text-align:right;}
+.ta-buy{color:var(--buy);}
+.ta-sell{color:var(--sell);}
+
+.trade-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:4px;transition:color .15s;line-height:1;}
+.trade-del:hover{color:var(--red);}
+
+.no-trades{text-align:center;padding:30px 0;color:var(--muted);font-size:14px;font-style:italic;}
+
+/* ── CALENDAR ── */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-nav{background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--muted);font-size:16px;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.cal-nav:hover{border-color:var(--accent);color:var(--accent);}
+.cal-month{font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent2);}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day-name{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0;text-transform:uppercase;letter-spacing:.5px;}
+
+.cal-cell {
+  aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;padding:4px 2px;
+  cursor:pointer;transition:all .2s;position:relative;
+  border:1.5px solid transparent; font-size:13px; font-weight:500;
+}
+.cal-cell:hover{background:var(--accent-light);border-color:var(--border);}
+.cal-cell.today{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:700;}
+.cal-cell.other-month{color:#c0d8ee;}
+.cal-cell.has-trades{background:var(--bg2);}
+
+.cal-num{font-size:13px;font-weight:600;line-height:1;}
+
+.cal-dots{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:center;}
+.cal-dot{width:5px;height:5px;border-radius:50%;}
+.dot-buy{background:var(--buy);}
+.dot-sell{background:var(--sell);}
+
+/* Day detail panel */
+.day-detail{background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-top:12px;display:none;}
+.day-detail.show{display:block;animation:fadeUp .25s ease both;}
+.day-detail-title{font-size:13px;font-weight:700;color:var(--accent2);margin-bottom:10px;}
+
+/* Cal export links */
+.cal-export{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.cal-export-btn{flex:1;min-width:120px;padding:9px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;text-decoration:none;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;}
+.cal-export-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,40,80,.22);backdrop-filter:blur(5px);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.overlay.show{display:flex;animation:fadeIn .2s ease both;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+.modal{background:var(--panel);border:1.5px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,70,160,.18);animation:modalIn .25s ease both;}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(18px);}to{opacity:1;transform:scale(1) translateY(0);}}
+
+.modal-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent2);margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+
+.field-label{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+
+.field-input {
+  width:100%; padding:12px 14px; border:1.5px solid var(--border);
+  border-radius:10px; font-size:16px; font-family:'DM Sans',sans-serif;
+  color:var(--text); background:var(--bg); outline:none;
+  transition:border-color .2s; margin-bottom:13px;
+}
+.field-input:focus{border-color:var(--accent);}
+.field-input.upper{text-transform:uppercase;letter-spacing:1px;}
+
+.type-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.type-pill{padding:7px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;background:var(--bg2);color:var(--text2);transition:all .2s;font-family:'DM Sans',sans-serif;}
+
+.trade-type-row{display:flex;gap:8px;margin-bottom:14px;}
+.trade-type-pill{flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;background:var(--bg2);color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif;text-align:center;}
+.trade-type-pill.active-buy{background:var(--buy-bg);color:var(--buy);border-color:#b0d0f5;}
+.trade-type-pill.active-sell{background:var(--sell-bg);color:var(--sell);border-color:var(--red-border);}
+
+.field-row{display:flex;gap:10px;}
+.field-row .field-input{margin-bottom:0;}
+
+.modal-actions{display:flex;gap:10px;margin-top:18px;}
+.btn-cancel{flex:1;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.btn-confirm{flex:2;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;box-shadow:0 2px 12px rgba(21,101,192,.25);}
+.btn-confirm:hover{background:var(--accent2);}
+.btn-cancel:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Summary strip */
+.summary-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.sum-card{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);text-align:center;}
+.sum-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.sum-val{font-family:'DM Serif Display',serif;font-size:20px;}
+.sv-buy{color:var(--buy);}
+.sv-sell{color:var(--sell);}
+.sv-net{color:var(--green);}
+
+/* Yahoo info */
+.yahoo-info{background:#f3eeff;border:1.5px solid #d0b8f5;border-radius:10px;padding:11px 14px;margin-top:10px;font-size:13px;color:#3a2060;line-height:1.6;}
+.yahoo-info strong{color:#6001d2;}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">📈 Investment Tracker</div>
+    <h1>Stock Routine</h1>
+    <p class="sub">Morning · Evening · Trade Log · Calendar</p>
+  </div>
+
+  <!-- Time Card -->
+  <div class="time-card">
+    <div class="time-left">
+      <div class="pulse-dot"></div>
+      <div>
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="clock-date" id="clockDate">--</div>
+      </div>
+    </div>
+    <div>
+      <div class="status-badge" id="mktStatus">--</div>
+      <div class="next-ev" id="mktNext">--</div>
+    </div>
+  </div>
+
+  <!-- Nav Tabs -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="goTab('morning',this)"><span class="tab-icon">🌅</span>Morning</div>
+    <div class="nav-tab" onclick="goTab('evening',this)"><span class="tab-icon">🌆</span>Evening</div>
+    <div class="nav-tab" onclick="goTab('trades',this)"><span class="tab-icon">💹</span>Trades</div>
+    <div class="nav-tab" onclick="goTab('calendar',this)"><span class="tab-icon">📅</span>Calendar</div>
+  </div>
+
+  <!-- ══ MORNING ══ -->
+  <div class="section active" id="morning">
+
+    <!-- Watchlist -->
+    <div class="card">
+      <div class="wl-header">
+        <div class="card-title">🗂 My Holdings</div>
+        <div class="wl-actions">
+          <a id="yahooLink" class="yahoo-btn" href="#" target="_blank">🟣 Yahoo Finance</a>
+          <button class="icon-btn" onclick="openWLModal()">+</button>
+        </div>
+      </div>
+      <div class="chips-wrap" id="holdingsGrid"></div>
+      <div class="yahoo-info">
+        <strong>💡 Yahoo Finance:</strong> Button above opens all your tickers at once. Create a free account &amp; save as a <strong>Watchlist</strong> for one-tap daily access.
+      </div>
+    </div>
+
+    <!-- Guide -->
+    <div class="card">
+      <div class="card-title">📊 Futures Signal Guide</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--green)"></div>+0.5% or higher → Proceed as planned ✅</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--yellow)"></div>±0.3% range → Uncertain — wait until 10:30 AM</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--red)"></div>-1% or lower → Wait until 10:30 AM ⚠️</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--red)"></div>-2% or lower → Consider postponing 🚨</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card">
+      <div class="prog-header">
+        <span class="prog-label">Progress</span>
+        <span class="prog-count" id="amCount">0 / 6</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="amBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="sec-header">
+      <div class="sec-icon am">🌅</div>
+      <div><div class="sec-title">Morning Checklist</div><div class="sec-desc">Before market open — 9:30 AM ET</div></div>
+    </div>
+
+    <div class="checklist" id="amList">
+      <div class="check-item" onclick="tick(this,'am')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Check S&P 500 Futures <span class="tag tag-time">9:00 AM</span></div>
+          <div class="check-desc">Search "S&P 500 futures" on Google. If below -1%, wait until 10:30 AM before trading.</div>
+          <a class="check-link" href="https://finance.yahoo.com/quote/ES=F/" target="_blank">🔗 View Futures</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'am')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Scan Pre-Market News <span class="tag tag-time">9:10 AM</span></div>
+          <div class="check-desc">Fed commentary, rate news, AI sector updates. Check NVDA, Samsung, SK Hynix headlines.</div>
+          <a class="check-link" href="https://www.cnbc.com/markets/" target="_blank">🔗 CNBC Markets</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'am')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Earnings Calendar <span class="tag tag-hot">Important</span></div>
+          <div class="check-desc">Check if any holdings report earnings today. Extra attention before/after TEM releases.</div>
+          <a class="check-link" href="https://www.earningswhispers.com/" target="_blank">🔗 Earnings Calendar</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'am')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Bitcoin Price Check <span class="tag tag-info">IREN Related</span></div>
+          <div class="check-desc">Holding IREN → monitor BTC. If BTC drops 5%+ expect IREN volatility.</div>
+          <a class="check-link" href="https://finance.yahoo.com/quote/BTC-USD/" target="_blank">🔗 BTC Price</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'am')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Confirm Sell Orders <span class="tag tag-hot">Action</span></div>
+          <div class="check-desc">PYPL · FTEC · QQQM pending sale. Execute between 10:30–11:30 AM after futures check.</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'am')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Confirm Buy Orders <span class="tag tag-info">Action</span></div>
+          <div class="check-desc">EWY + IEMG at 50/50 split. Reinvest immediately on same day as sells.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="done-banner" id="amDone">
+      <div class="done-emoji">🌅</div>
+      <div class="done-title">Morning Routine Complete!</div>
+      <div class="done-desc">Execute trades in the 10:30–11:30 AM golden window 💪</div>
+    </div>
+    <button class="reset-btn" onclick="resetSec('am')">↺ Reset</button>
+  </div>
+
+  <!-- ══ EVENING ══ -->
+  <div class="section" id="evening">
+
+    <div class="sec-header">
+      <div class="sec-icon pm">🌆</div>
+      <div><div class="sec-title">Evening Checklist</div><div class="sec-desc">After market close — 4:00 PM ET</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📉 Close Reading Guide</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--green)"></div>Closed near day high → Bullish signal for tomorrow ✅</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--red)"></div>Closed near day low → Caution tomorrow ⚠️</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--yellow)"></div>Gapped up, then faded → Buying exhaustion signal</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--green)"></div>Gapped down, then recovered → Dip buyers stepped in</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--accent)"></div>Rise + high volume → Genuine strength ✅</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--muted)"></div>Rise + low volume → Less conviction, be cautious</div>
+    </div>
+
+    <div class="card">
+      <div class="prog-header">
+        <span class="prog-label">Progress</span>
+        <span class="prog-count" id="pmCount">0 / 5</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="pmBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="checklist" id="pmList">
+      <div class="check-item" onclick="tick(this,'pm')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Review S&P 500 Close Chart <span class="tag tag-time">4:30 PM</span></div>
+          <div class="check-desc">Check the final 30 minutes of the chart. Rising into close = positive sign.</div>
+          <a class="check-link" href="https://finance.yahoo.com/quote/%5EGSPC/" target="_blank">🔗 S&P 500 Chart</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'pm')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Review Holdings Performance <span class="tag tag-time">4:30 PM</span></div>
+          <div class="check-desc">Check NVDA · IREN · TEM · EWY · IEMG. IREN stop-loss watch: below $35.</div>
+          <a class="check-link" href="https://finance.yahoo.com/" target="_blank">🔗 Yahoo Finance</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'pm')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Tomorrow's Earnings <span class="tag tag-hot">Important</span></div>
+          <div class="check-desc">Check if any holdings report tomorrow. Pre-position or reduce before major releases.</div>
+          <a class="check-link" href="https://www.earningswhispers.com/" target="_blank">🔗 Earnings Calendar</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'pm')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Korea Market Pulse <span class="tag tag-info">EWY Related</span></div>
+          <div class="check-desc">Samsung Electronics & SK Hynix trend. Korea/EM news affects EWY &amp; IEMG.</div>
+          <a class="check-link" href="https://finance.yahoo.com/quote/EWY/" target="_blank">🔗 EWY Chart</a>
+        </div>
+      </div>
+      <div class="check-item" onclick="tick(this,'pm')">
+        <div class="check-box"><span class="check-mark">✓</span></div>
+        <div class="check-body">
+          <div class="check-title">Log Today's Trades <span class="tag tag-info">Record</span></div>
+          <div class="check-desc">Go to the Trades tab and record any buys or sells from today.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="done-banner" id="pmDone">
+      <div class="done-emoji">🌆</div>
+      <div class="done-title">Evening Routine Complete!</div>
+      <div class="done-desc">Great work today. See you tomorrow! 💪</div>
+    </div>
+    <button class="reset-btn" onclick="resetSec('pm')">↺ Reset</button>
+  </div>
+
+  <!-- ══ TRADES ══ -->
+  <div class="section" id="trades">
+
+    <div class="sec-header">
+      <div class="sec-icon trd">💹</div>
+      <div><div class="sec-title">Trade Log</div><div class="sec-desc">Record every buy &amp; sell</div></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-strip">
+      <div class="sum-card"><div class="sum-label">Buys</div><div class="sum-val sv-buy" id="sumBuys">0</div></div>
+      <div class="sum-card"><div class="sum-label">Sells</div><div class="sum-val sv-sell" id="sumSells">0</div></div>
+      <div class="sum-card"><div class="sum-label">Net P&L</div><div class="sum-val sv-net" id="sumPnl">$0</div></div>
+    </div>
+
+    <!-- Watchlist for trades -->
+    <div class="card">
+      <div class="wl-header">
+        <div class="card-title">📋 Buy / Sell Watchlist</div>
+        <div class="wl-actions">
+          <button class="icon-btn" onclick="openTradeWLModal()">+</button>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">🟢 Buy Targets</div>
+        <div class="chips-wrap" id="buyTargets"></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">🔴 Sell Targets</div>
+        <div class="chips-wrap" id="sellTargets"></div>
+      </div>
+    </div>
+
+    <!-- Add trade -->
+    <div class="trade-toolbar">
+      <button class="trade-btn buy" onclick="openTradeModal('BUY')">📈 Log Buy</button>
+      <button class="trade-btn sell" onclick="openTradeModal('SELL')">📉 Log Sell</button>
+    </div>
+
+    <div class="trade-list" id="tradeList">
+      <div class="no-trades" id="noTrades">No trades logged yet.<br>Tap Log Buy or Log Sell to start.</div>
+    </div>
+  </div>
+
+  <!-- ══ CALENDAR ══ -->
+  <div class="section" id="calendar">
+
+    <div class="sec-header">
+      <div class="sec-icon cal">📅</div>
+      <div><div class="sec-title">Trade Calendar</div><div class="sec-desc">Visual trade history by date</div></div>
+    </div>
+
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="prevMonth()">‹</button>
+        <div class="cal-month" id="calMonthLabel"></div>
+        <button class="cal-nav" onclick="nextMonth()">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="day-detail" id="dayDetail">
+        <div class="day-detail-title" id="dayDetailTitle"></div>
+        <div id="dayDetailBody"></div>
+      </div>
+    </div>
+
+    <!-- Export / Link to Google Calendar -->
+    <div class="card">
+      <div class="card-title">🔗 Calendar Integration</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--accent)"></div>Tap a date on the calendar above to see trades logged that day.</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--green)"></div>Use the buttons below to open Google or Apple Calendar for reminders.</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--yellow)"></div>Add earnings dates manually to your calendar to prepare in advance.</div>
+      <div class="cal-export">
+        <a class="cal-export-btn" href="https://calendar.google.com/" target="_blank">📅 Google Calendar</a>
+        <a class="cal-export-btn" href="https://www.icloud.com/calendar/" target="_blank">🍎 Apple Calendar</a>
+        <button class="cal-export-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📌 How to Link Your Calendar</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--green)"></div><strong>Google Calendar:</strong> Open → Create Event → Title: "BUY NVDA $500 @ $890" → Set reminder for next earnings.</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--accent)"></div><strong>Apple Calendar:</strong> Same approach — use event notes to log price, shares, reason.</div>
+      <div class="guide-row"><div class="guide-dot" style="background:var(--yellow)"></div>All trades logged here are stored locally in your browser. Use Export CSV to back up.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL: Add Holding ══ -->
+<div class="overlay" id="wlOverlay" onclick="oClose('wlOverlay',event)">
+  <div class="modal">
+    <div class="modal-title">Add Holding</div>
+    <div class="modal-sub">Enter ticker and select a category</div>
+    <div class="field-label">Ticker Symbol</div>
+    <input class="field-input upper" id="wlTicker" placeholder="e.g. AAPL, NVDA, EWY" maxlength="12" onkeydown="if(event.key==='Enter')addHolding()"/>
+    <div class="field-label">Category</div>
+    <div class="type-grid" id="wlTypes">
+      <button class="type-pill" style="background:#e6f0fd;color:#0044aa;border-color:#b8d0f5;" onclick="pickCat('tech',this)">📱 US Tech</button>
+      <button class="type-pill" onclick="pickCat('em',this)">🌏 Emerging</button>
+      <button class="type-pill" onclick="pickCat('hold',this)">⏳ Hold</button>
+      <button class="type-pill" onclick="pickCat('watch',this)">⚠️ Watch</button>
+      <button class="type-pill" onclick="pickCat('other',this)">✨ Other</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeOverlay('wlOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="addHolding()">Add Holding</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Trade Watchlist ══ -->
+<div class="overlay" id="tradeWLOverlay" onclick="oClose('tradeWLOverlay',event)">
+  <div class="modal">
+    <div class="modal-title">Add to Watchlist</div>
+    <div class="modal-sub">Add a ticker to your buy or sell target list</div>
+    <div class="field-label">Ticker Symbol</div>
+    <input class="field-input upper" id="twlTicker" placeholder="e.g. TSLA, QQQ" maxlength="12" onkeydown="if(event.key==='Enter')addTradeWL()"/>
+    <div class="field-label">List</div>
+    <div class="trade-type-row">
+      <div class="trade-type-pill active-buy" id="twlBuyPill" onclick="twlPick('BUY')">🟢 Buy Target</div>
+      <div class="trade-type-pill" id="twlSellPill" onclick="twlPick('SELL')">🔴 Sell Target</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeOverlay('tradeWLOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="addTradeWL()">Add to List</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Log Trade ══ -->
+<div class="overlay" id="tradeOverlay" onclick="oClose('tradeOverlay',event)">
+  <div class="modal">
+    <div class="modal-title" id="tradeModalTitle">Log Trade</div>
+    <div class="modal-sub">Record your buy or sell transaction</div>
+    <div class="trade-type-row">
+      <div class="trade-type-pill" id="tBuyPill" onclick="setTradeType('BUY')">📈 Buy</div>
+      <div class="trade-type-pill" id="tSellPill" onclick="setTradeType('SELL')">📉 Sell</div>
+    </div>
+    <div class="field-label">Ticker</div>
+    <input class="field-input upper" id="tTicker" placeholder="e.g. NVDA, EWY" maxlength="12"/>
+    <div class="field-row" style="gap:10px;margin-bottom:13px;">
+      <div style="flex:1;">
+        <div class="field-label">Shares</div>
+        <input class="field-input" id="tShares" type="number" placeholder="10" min="0" step="any" style="margin-bottom:0;"/>
+      </div>
+      <div style="flex:1;">
+        <div class="field-label">Price per share</div>
+        <input class="field-input" id="tPrice" type="number" placeholder="450.00" min="0" step="any" style="margin-bottom:0;"/>
+      </div>
+    </div>
+    <div class="field-label">Date</div>
+    <input class="field-input" id="tDate" type="date" style="margin-bottom:13px;"/>
+    <div class="field-label">Notes (optional)</div>
+    <input class="field-input" id="tNotes" placeholder="e.g. TEM earnings play, FTEC cleanup" maxlength="80"/>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeOverlay('tradeOverlay')">Cancel</button>
+      <button class="btn-confirm" onclick="saveTrade()">Save Trade</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let holdings = [
+  {t:'NVDA',c:'tech'},{t:'VGT',c:'tech'},{t:'VPU',c:'tech'},
+  {t:'FBGRX',c:'tech'},{t:'GOOGL',c:'tech'},{t:'MSFT',c:'tech'},
+  {t:'AMD',c:'tech'},{t:'EWY',c:'em'},{t:'IEMG',c:'em'},
+  {t:'IREN',c:'hold'},{t:'TEM',c:'watch'},{t:'PYPL',c:'watch'}
+];
+
+let buyTargets = [{t:'EWY'},{t:'IEMG'}];
+let sellTargets = [{t:'PYPL'},{t:'FTEC'},{t:'QQQM'}];
+let trades = [];
+
+let selCat = 'tech';
+let twlType = 'BUY';
+let tradeType = 'BUY';
+
+// Cal state
+let calYear, calMonth, selDay = null;
+
+// ════════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════════
+function updateClock() {
+  const et = new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const h=et.getHours(),m=et.getMinutes(),s=et.getSeconds();
+  document.getElementById('clock').textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clockDate').textContent=`${days[et.getDay()]}, ${months[et.getMonth()]} ${et.getDate()} · ET`;
+
+  const day=et.getDay(), tot=h*60+m;
+  const wknd=day===0||day===6;
+  const sEl=document.getElementById('mktStatus');
+  const nEl=document.getElementById('mktNext');
+  if(wknd){sEl.className='status-badge s-closed';sEl.textContent='Weekend';nEl.textContent='Opens Mon 9:30 AM ET';}
+  else if(tot>=240&&tot<570){sEl.className='status-badge s-pre';sEl.textContent='Pre-Market';nEl.textContent=`Regular open in ${570-tot}min`;}
+  else if(tot>=570&&tot<960){sEl.className='status-badge s-open';sEl.textContent='🟢 Open';nEl.textContent=`Closes in ${960-tot}min`;}
+  else if(tot>=960&&tot<1200){sEl.className='status-badge s-pre';sEl.textContent='After Hours';nEl.textContent='Opens 9:30 AM ET tomorrow';}
+  else{sEl.className='status-badge s-closed';sEl.textContent='Closed';nEl.textContent='Opens 9:30 AM ET tomorrow';}
+}
+const pad=n=>String(n).padStart(2,'0');
+setInterval(updateClock,1000); updateClock();
+
+// ════════════════════════════════════════════
+//  NAV TABS
+// ════════════════════════════════════════════
+function goTab(id, el) {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(id).classList.add('active');
+  if(id==='calendar') renderCal();
+}
+
+// ════════════════════════════════════════════
+//  CHECKLIST
+// ════════════════════════════════════════════
+const totals={am:6,pm:5};
+function tick(el, sec) {
+  el.classList.toggle('checked');
+  const count=document.querySelectorAll(`#${sec}List .check-item.checked`).length;
+  const total=totals[sec];
+  document.getElementById(`${sec}Count`).textContent=`${count} / ${total}`;
+  document.getElementById(`${sec}Bar`).style.width=(count/total*100)+'%';
+  document.getElementById(`${sec}Done`).classList.toggle('show',count===total);
+}
+function resetSec(sec){
+  document.querySelectorAll(`#${sec}List .check-item`).forEach(el=>el.classList.remove('checked'));
+  document.getElementById(`${sec}Count`).textContent=`0 / ${totals[sec]}`;
+  document.getElementById(`${sec}Bar`).style.width='0%';
+  document.getElementById(`${sec}Done`).classList.remove('show');
+}
+
+// ════════════════════════════════════════════
+//  HOLDINGS WATCHLIST
+// ════════════════════════════════════════════
+function renderHoldings() {
+  const g=document.getElementById('holdingsGrid');
+  if(!holdings.length){g.innerHTML='<span class="empty-note">Add holdings with + button</span>';return;}
+  g.innerHTML=holdings.map((h,i)=>
+    `<span class="chip chip-${h.c}">${h.t}<button class="chip-x" onclick="delHolding(${i})">×</button></span>`
+  ).join('');
+  const tickers=holdings.map(h=>h.t).join(',');
+  document.getElementById('yahooLink').href=
+    tickers ? `https://finance.yahoo.com/quotes/${tickers}/` : '#';
+}
+function delHolding(i){if(confirm(`Remove "${holdings[i].t}"?`)){holdings.splice(i,1);renderHoldings();}}
+
+// ════════════════════════════════════════════
+//  HOLDINGS MODAL
+// ════════════════════════════════════════════
+function openWLModal(){
+  document.getElementById('wlTicker').value='';
+  selCat='tech';
+  document.querySelectorAll('#wlTypes .type-pill').forEach((b,i)=>{
+    b.className='type-pill';
+    if(i===0){b.style='background:#e6f0fd;color:#0044aa;border-color:#b8d0f5;';}
+    else{b.removeAttribute('style');}
+  });
+  document.getElementById('wlOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('wlTicker').focus(),100);
+}
+function pickCat(cat, btn){
+  selCat=cat;
+  const styles={tech:'background:#e6f0fd;color:#0044aa;border-color:#b8d0f5;',em:'background:#e0f7f0;color:#006644;border-color:#9ed8be;',watch:'background:var(--red-bg);color:var(--red);border-color:var(--red-border);',hold:'background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow-border);',other:'background:var(--accent-light);color:var(--accent);border-color:var(--border);'};
+  document.querySelectorAll('#wlTypes .type-pill').forEach(b=>{b.removeAttribute('style');});
+  btn.style=styles[cat]||'';
+}
+function addHolding(){
+  const t=document.getElementById('wlTicker').value.trim().toUpperCase();
+  if(!t) return;
+  if(holdings.find(h=>h.t===t)){alert('Already in holdings!');return;}
+  holdings.push({t,c:selCat});
+  renderHoldings(); closeOverlay('wlOverlay');
+}
+
+// ════════════════════════════════════════════
+//  TRADE WATCHLIST
+// ════════════════════════════════════════════
+function renderTradeWL(){
+  const bg=document.getElementById('buyTargets');
+  const sg=document.getElementById('sellTargets');
+  bg.innerHTML=buyTargets.length
+    ? buyTargets.map((x,i)=>`<span class="chip chip-tech">${x.t}<button class="chip-x" onclick="delTradeWL('buy',${i})">×</button></span>`).join('')
+    : '<span class="empty-note">None</span>';
+  sg.innerHTML=sellTargets.length
+    ? sellTargets.map((x,i)=>`<span class="chip chip-watch">${x.t}<button class="chip-x" onclick="delTradeWL('sell',${i})">×</button></span>`).join('')
+    : '<span class="empty-note">None</span>';
+}
+function delTradeWL(list,i){
+  if(list==='buy') buyTargets.splice(i,1);
+  else sellTargets.splice(i,1);
+  renderTradeWL();
+}
+function openTradeWLModal(){
+  document.getElementById('twlTicker').value='';
+  twlType='BUY';
+  document.getElementById('twlBuyPill').className='trade-type-pill active-buy';
+  document.getElementById('twlSellPill').className='trade-type-pill';
+  document.getElementById('tradeWLOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('twlTicker').focus(),100);
+}
+function twlPick(type){
+  twlType=type;
+  document.getElementById('twlBuyPill').className='trade-type-pill'+(type==='BUY'?' active-buy':'');
+  document.getElementById('twlSellPill').className='trade-type-pill'+(type==='SELL'?' active-sell':'');
+}
+function addTradeWL(){
+  const t=document.getElementById('twlTicker').value.trim().toUpperCase();
+  if(!t) return;
+  if(twlType==='BUY'){
+    if(!buyTargets.find(x=>x.t===t)) buyTargets.push({t});
+  } else {
+    if(!sellTargets.find(x=>x.t===t)) sellTargets.push({t});
+  }
+  renderTradeWL(); closeOverlay('tradeWLOverlay');
+}
+
+// ════════════════════════════════════════════
+//  TRADE LOG
+// ════════════════════════════════════════════
+function openTradeModal(type){
+  tradeType=type;
+  setTradeType(type);
+  document.getElementById('tTicker').value='';
+  document.getElementById('tShares').value='';
+  document.getElementById('tPrice').value='';
+  document.getElementById('tNotes').value='';
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('tDate').value=today;
+  document.getElementById('tradeOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('tTicker').focus(),100);
+}
+function setTradeType(type){
+  tradeType=type;
+  document.getElementById('tBuyPill').className='trade-type-pill'+(type==='BUY'?' active-buy':'');
+  document.getElementById('tSellPill').className='trade-type-pill'+(type==='SELL'?' active-sell':'');
+}
+function saveTrade(){
+  const ticker=document.getElementById('tTicker').value.trim().toUpperCase();
+  const shares=parseFloat(document.getElementById('tShares').value)||0;
+  const price=parseFloat(document.getElementById('tPrice').value)||0;
+  const date=document.getElementById('tDate').value;
+  const notes=document.getElementById('tNotes').value.trim();
+  if(!ticker||!shares||!price||!date){alert('Please fill in Ticker, Shares, Price and Date.');return;}
+  const total=shares*price;
+  trades.unshift({type:tradeType,ticker,shares,price,total,date,notes,id:Date.now()});
+  renderTrades(); closeOverlay('tradeOverlay');
+  if(document.getElementById('calendar').classList.contains('active')) renderCal();
+}
+function renderTrades(){
+  const list=document.getElementById('tradeList');
+  const noT=document.getElementById('noTrades');
+  if(!trades.length){list.innerHTML='';list.appendChild(noT);noT.style.display='block';updateSummary();return;}
+  noT.style.display='none';
+  list.innerHTML=trades.map(tr=>{
+    const isBuy=tr.type==='BUY';
+    return `<div class="trade-entry">
+      <span class="trade-badge ${isBuy?'tb-buy':'tb-sell'}">${tr.type}</span>
+      <div class="trade-info">
+        <div class="trade-ticker">${tr.ticker}</div>
+        <div class="trade-meta">${tr.shares} shares @ $${tr.price.toFixed(2)} · ${formatDate(tr.date)}${tr.notes?` · ${tr.notes}`:''}</div>
+      </div>
+      <div class="trade-amount ${isBuy?'ta-buy':'ta-sell'}">${isBuy?'-':'+'}$${tr.total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <button class="trade-del" onclick="deleteTrade(${tr.id})">🗑</button>
+    </div>`;
+  }).join('');
+  updateSummary();
+}
+function deleteTrade(id){
+  if(confirm('Delete this trade?')){
+    trades=trades.filter(t=>t.id!==id);
+    renderTrades();
+    if(document.getElementById('calendar').classList.contains('active')) renderCal();
+  }
+}
+function updateSummary(){
+  const buys=trades.filter(t=>t.type==='BUY');
+  const sells=trades.filter(t=>t.type==='SELL');
+  const buyTotal=buys.reduce((a,t)=>a+t.total,0);
+  const sellTotal=sells.reduce((a,t)=>a+t.total,0);
+  const net=sellTotal-buyTotal;
+  document.getElementById('sumBuys').textContent=buys.length;
+  document.getElementById('sumSells').textContent=sells.length;
+  const pnlEl=document.getElementById('sumPnl');
+  pnlEl.textContent=(net>=0?'+':'')+`$${Math.abs(net).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
+  pnlEl.style.color=net>=0?'var(--green)':net<0?'var(--red)':'var(--green)';
+}
+function formatDate(d){const p=d.split('-');const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${months[parseInt(p[1])-1]} ${parseInt(p[2])}, ${p[0]}`;}
+
+// ════════════════════════════════════════════
+//  CALENDAR
+// ════════════════════════════════════════════
+function initCal(){
+  const now=new Date();
+  calYear=now.getFullYear();
+  calMonth=now.getMonth();
+}
+function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+
+function renderCal(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthLabel').textContent=`${months[calMonth]} ${calYear}`;
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+
+  // Day names
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
+    const el=document.createElement('div');
+    el.className='cal-day-name'; el.textContent=d;
+    grid.appendChild(el);
+  });
+
+  const first=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const today=new Date();
+
+  // Empty cells
+  for(let i=0;i<first;i++){
+    const el=document.createElement('div');
+    el.className='cal-cell other-month';
+    const prevDays=new Date(calYear,calMonth,0).getDate();
+    el.innerHTML=`<span class="cal-num">${prevDays-first+1+i}</span>`;
+    grid.appendChild(el);
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${calYear}-${pad(calMonth+1)}-${pad(d)}`;
+    const dayTrades=trades.filter(t=>t.date===dateStr);
+    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+
+    const el=document.createElement('div');
+    el.className='cal-cell'+(isToday?' today':'')+(dayTrades.length?' has-trades':'');
+    el.onclick=()=>showDay(dateStr,d);
+
+    let dots='';
+    dayTrades.forEach(t=>{ dots+=`<div class="cal-dot ${t.type==='BUY'?'dot-buy':'dot-sell'}"></div>`; });
+
+    el.innerHTML=`<span class="cal-num">${d}</span>${dots?`<div class="cal-dots">${dots}</div>`:''}`;
+    grid.appendChild(el);
+  }
+
+  // Remaining cells
+  const used=first+daysInMonth;
+  const remaining=used%7===0?0:7-(used%7);
+  for(let i=1;i<=remaining;i++){
+    const el=document.createElement('div');
+    el.className='cal-cell other-month';
+    el.innerHTML=`<span class="cal-num">${i}</span>`;
+    grid.appendChild(el);
+  }
+
+  if(selDay) showDay(selDay);
+}
+
+function showDay(dateStr, dayNum){
+  selDay=dateStr;
+  const dayTrades=trades.filter(t=>t.date===dateStr);
+  const detail=document.getElementById('dayDetail');
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const parts=dateStr.split('-');
+  document.getElementById('dayDetailTitle').textContent=`${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}, ${parts[0]}`;
+
+  if(!dayTrades.length){
+    document.getElementById('dayDetailBody').innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic;">No trades on this day.</div>';
+  } else {
+    document.getElementById('dayDetailBody').innerHTML=dayTrades.map(tr=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border2);">
+        <span class="trade-badge ${tr.type==='BUY'?'tb-buy':'tb-sell'}" style="font-size:11px;">${tr.type}</span>
+        <span style="font-size:14px;font-weight:700;">${tr.ticker}</span>
+        <span style="font-size:13px;color:var(--muted);">${tr.shares} @ $${tr.price.toFixed(2)}</span>
+        <span style="font-size:13px;font-weight:700;margin-left:auto;color:${tr.type==='BUY'?'var(--buy)':'var(--sell)'};">$${tr.total.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
+      </div>
+    `).join('');
+  }
+  detail.classList.add('show');
+}
+
+// ════════════════════════════════════════════
+//  CSV EXPORT
+// ════════════════════════════════════════════
+function exportCSV(){
+  if(!trades.length){alert('No trades to export yet.');return;}
+  const rows=[['Date','Type','Ticker','Shares','Price','Total','Notes']];
+  trades.forEach(t=>rows.push([t.date,t.type,t.ticker,t.shares,t.price.toFixed(2),t.total.toFixed(2),t.notes||'']));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='trade-log.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════
+//  MODAL HELPERS
+// ════════════════════════════════════════════
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+function oClose(id,e){ if(e.target===document.getElementById(id)) closeOverlay(id); }
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+initCal();
+renderHoldings();
+renderTradeWL();
+renderTrades();
+</script>
+</body>
+</html>
